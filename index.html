@@ -269,6 +269,31 @@
       <div class="price" id="finalPrice"></div>
     </div>
 
+    
+    <div class="row">
+  <span>Truckloads</span>
+  <strong id="truckloads">—</strong>
+</div>
+
+<div class="row">
+  <span>Estimated Paid Hours</span>
+  <strong id="paidHours">—</strong>
+</div>
+
+<div class="row">
+  <span>Estimated Delivery Cost</span>
+  <strong id="deliveryCost">—</strong>
+</div>
+
+<div class="row">
+  <span>Delivery Profit</span>
+  <strong id="deliveryProfit">—</strong>
+</div>
+
+<div class="row">
+  <span>Profit Margin</span>
+  <strong id="profitMargin">—</strong>
+</div>
     <div class="minimum-note">
       Delivery minimum: $400
     </div>
@@ -438,6 +463,26 @@ async function calculateDelivery() {
       400
     );
 
+    // Internal delivery cost / profit calculation
+const truckCapacity = 22;
+const loads = Math.ceil(tons / truckCapacity);
+
+// Driver starts at the yard and ends at the customer after the final load.
+// 1 load = 1 one-way trip
+// 2 loads = 3 one-way trips
+// 3 loads = 5 one-way trips, etc.
+const paidTrips = (loads * 2) - 1;
+
+const paidMiles = pricingDistance * paidTrips;
+const paidMinutes = paidMiles * 1.05;
+const paidHours = paidMinutes / 60;
+
+const hourlyCost = 125;
+const deliveryCost = paidHours * hourlyCost;
+
+const deliveryProfit = finalPrice - deliveryCost;
+const profitMargin = (deliveryProfit / finalPrice) * 100;
+
     document.getElementById("saltMiles").textContent =
       saltMiles.toFixed(2) + " miles";
 
@@ -467,6 +512,21 @@ async function calculateDelivery() {
 
     document.getElementById("finalPrice").textContent =
       money(finalPrice);
+
+    document.getElementById("truckloads").textContent =
+  loads;
+
+document.getElementById("paidHours").textContent =
+  paidHours.toFixed(2) + " hours";
+
+document.getElementById("deliveryCost").textContent =
+  money(deliveryCost);
+
+document.getElementById("deliveryProfit").textContent =
+  money(deliveryProfit);
+
+document.getElementById("profitMargin").textContent =
+  profitMargin.toFixed(1) + "%";
 
     status.textContent = "";
 
