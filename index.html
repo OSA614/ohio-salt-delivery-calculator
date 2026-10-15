@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ohio Salt Authority Delivery Calculator</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      padding: 30px 15px;
+      background: #111;
+      color: white;
+      font-family: Arial, sans-serif;
+    }
+
+    .calculator {
+      max-width: 600px;
+      margin: auto;
+      background: #1d1d1d;
+      padding: 28px;
+      border-radius: 14px;
+      border-top: 6px solid #f5b800;
+    }
+
+    h1 {
+      margin-top: 0;
+      color: #f5b800;
+      text-align: center;
+    }
+
+    .subtitle {
+      text-align: center;
+      color: #bbb;
+      margin-bottom: 30px;
+    }
+
+    label {
+      display: block;
+      margin-top: 18px;
+      margin-bottom: 7px;
+      font-weight: bold;
+    }
+
+    input {
+      width: 100%;
+      padding: 14px;
+      font-size: 17px;
+      border-radius: 7px;
+      border: 1px solid #555;
+      background: #292929;
+      color: white;
+    }
+
+    button {
+      width: 100%;
+      padding: 16px;
+      margin-top: 25px;
+      border: none;
+      border-radius: 7px;
+      background: #f5b800;
+      color: #111;
+      font-size: 18px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background: #ffd044;
+    }
+
+    .result {
+      display: none;
+      margin-top: 28px;
+      padding-top: 25px;
+      border-top: 1px solid #555;
+    }
+
+    .row {
+      display: flex;
+      justify-content: space-between;
+      gap: 15px;
+      padding: 8px 0;
+      border-bottom: 1px solid #333;
+    }
+
+    .muted {
+      color: #aaa;
+    }
+
+    .highlight {
+      color: #f5b800;
+      font-weight: bold;
+    }
+
+    .final-price {
+      margin-top: 25px;
+      text-align: center;
+      background: #292929;
+      padding: 22px;
+      border-radius: 10px;
+    }
+
+    .final-price .amount {
+      color: #f5b800;
+      font-size: 38px;
+      font-weight: bold;
+    }
+
+    .warning {
+      color: #ff6961;
+      font-weight: bold;
+      margin-top: 15px;
+    }
+
+    .minimum {
+      color: #f5b800;
+      font-weight: bold;
+      text-align: center;
+      margin-top: 15px;
+    }
+  </style>
+</head>
+
+<body>
+
+<div class="calculator">
+
+  <h1>OHIO SALT AUTHORITY</h1>
+  <div class="subtitle">Delivery Calculator</div>
+
+  <label for="address">Customer Delivery Address</label>
+  <input
+    id="address"
+    type="text"
+    placeholder="Example: 123 Main St, Columbus, OH 43215"
+  >
+
+  <!-- TEMPORARY mileage fields.
+       Automatic address mileage will replace these next. -->
+
+  <label for="saltMiles">Miles From Salt Yard</label>
+  <input
+    id="saltMiles"
+    type="number"
+    step="0.1"
+    min="0"
+    placeholder="Enter miles"
+  >
+
+  <label for="trainMiles">Miles From Train Yard</label>
+  <input
+    id="trainMiles"
+    type="number"
+    step="0.1"
+    min="0"
+    placeholder="Enter miles"
+  >
+
+  <label for="tons">Tons</label>
+  <input
+    id="tons"
+    type="number"
+    step="0.01"
+    min="0"
+    placeholder="Example: 24"
+  >
+
+  <button onclick="calculateDelivery()">
+    CALCULATE DELIVERY
+  </button>
+
+  <div id="result" class="result">
+
+    <div class="row">
+      <span class="muted">Salt Yard Distance</span>
+      <span id="saltResult"></span>
+    </div>
+
+    <div class="row">
+      <span class="muted">Train Yard Distance</span>
+      <span id="trainResult"></span>
+    </div>
+
+    <div class="row">
+      <span class="muted">Farthest Yard</span>
+      <span id="farthestYard" class="highlight"></span>
+    </div>
+
+    <div class="row">
+      <span class="muted">Pricing Distance</span>
+      <span id="pricingDistance"></span>
+    </div>
+
+    <div class="row">
+      <span class="muted">Mileage Bracket</span>
+      <span id="bracket"></span>
+    </div>
+
+    <div class="row">
+      <span class="muted">Delivery Rate</span>
+      <span id="rate"></span>
+    </div>
+
+    <div class="row">
+      <span class="muted">Tons</span>
+      <span id="tonsResult"></span>
+    </div>
+
+    <div class="row">
+      <span class="muted">Calculated Delivery</span>
+      <span id="calculated"></span>
+    </div>
+
+    <div id="minimumMessage" class="minimum"></div>
+    <div id="warning" class="warning"></div>
+
+    <div id="finalBox" class="final-price">
+      <div>DELIVERY PRICE</div>
+      <div id="finalPrice" class="amount"></div>
+    </div>
+
+  </div>
+
+</div>
+
+<script>
+
+const rates = [
+  { min: 0,   max: 30,  rate: 17.75, label: "0–29.99 miles" },
+  { min: 30,  max: 40,  rate: 18.82, label: "30–39.99 miles" },
+  { min: 40,  max: 50,  rate: 19.93, label: "40–49.99 miles" },
+  { min: 50,  max: 60,  rate: 21.14, label: "50–59.99 miles" },
+  { min: 60,  max: 70,  rate: 22.43, label: "60–69.99 miles" },
+  { min: 70,  max: 80,  rate: 23.30, label: "70–79.99 miles" },
+  { min: 80,  max: 90,  rate: 24.20, label: "80–89.99 miles" },
+  { min: 90,  max: 100, rate: 25.66, label: "90–99.99 miles" },
+  { min: 100, max: 110, rate: 26.56, label: "100–109.99 miles" },
+  { min: 110, max: 120, rate: 27.79, label: "110–119.99 miles" },
+  { min: 120, max: 130, rate: 29.24, label: "120–129.99 miles" },
+  { min: 130, max: 140, rate: 30.68, label: "130–139.99 miles" },
+  { min: 140, max: 150, rate: 32.08, label: "140–149.99 miles" },
+  { min: 150, max: 160, rate: 33.55, label: "150–159.99 miles" },
+  { min: 160, max: 170, rate: 35.17, label: "160–169.99 miles" },
+  { min: 170, max: 180, rate: 36.58, label: "170–179.99 miles" },
+  { min: 180, max: 190, rate: 38.20, label: "180–189.99 miles" },
+  { min: 190, max: 200, rate: 39.64, label: "190–199.99 miles" },
+  { min: 200, max: 210, rate: 41.05, label: "200–209.99 miles" },
+  { min: 210, max: 220, rate: 42.67, label: "210–219.99 miles" },
+  { min: 220, max: 230, rate: 44.11, label: "220–229.99 miles" },
+  { min: 230, max: 240, rate: 45.71, label: "230–239.99 miles" },
+  { min: 240, max: 250, rate: 47.14, label: "240–249.99 miles" },
+  { min: 250, max: 260, rate: 48.59, label: "250–259.99 miles" },
+  { min: 260, max: 270, rate: 50.20, label: "260–269.99 miles" },
+  { min: 270, max: 280, rate: 51.74, label: "270–279.99 miles" },
+  { min: 280, max: 290, rate: 53.26, label: "280–289.99 miles" },
+  { min: 290, max: 300, rate: 54.88, label: "290–299.99 miles" }
+];
+
+function calculateDelivery() {
+
+  const saltMiles =
+    parseFloat(document.getElementById("saltMiles").value);
+
+  const trainMiles =
+    parseFloat(document.getElementById("trainMiles").value);
+
+  const tons =
+    parseFloat(document.getElementById("tons").value);
+
+  const result =
+    document.getElementById("result");
+
+  const warning =
+    document.getElementById("warning");
+
+  const finalBox =
+    document.getElementById("finalBox");
+
+  warning.innerText = "";
+  document.getElementById("minimumMessage").innerText = "";
+
+  if (
+    isNaN(saltMiles) ||
+    isNaN(trainMiles) ||
+    isNaN(tons) ||
+    saltMiles < 0 ||
+    trainMiles < 0 ||
+    tons <= 0
+  ) {
+    alert("Please enter valid mileage and tonnage.");
+    return;
+  }
+
+  const farthestDistance =
+    Math.max(saltMiles, trainMiles);
+
+  const farthestYard =
+    saltMiles >= trainMiles
+      ? "Salt Yard – Delaware"
+      : "Train Yard – Marion";
+
+  result.style.display = "block";
+
+  document.getElementById("saltResult").innerText =
+    saltMiles.toFixed(1) + " miles";
+
+  document.getElementById("trainResult").innerText =
+    trainMiles.toFixed(1) + " miles";
+
+  document.getElementById("farthestYard").innerText =
+    farthestYard;
+
+  document.getElementById("pricingDistance").innerText =
+    farthestDistance.toFixed(1) + " miles";
+
+  document.getElementById("tonsResult").innerText =
+    tons.toFixed(2);
+
+  if (farthestDistance >= 300) {
+
+    document.getElementById("bracket").innerText =
+      "300+ miles";
+
+    document.getElementById("rate").innerText =
+      "Manual Quote";
+
+    document.getElementById("calculated").innerText =
+      "—";
+
+    warning.innerText =
+      "OVER 299 MILES — MANUAL QUOTE REQUIRED";
+
+    finalBox.style.display = "none";
+
+    return;
+  }
+
+  finalBox.style.display = "block";
+
+  const rateInfo =
+    rates.find(
+      item =>
+        farthestDistance >= item.min &&
+        farthestDistance < item.max
+    );
+
+  const calculatedPrice =
+    tons * rateInfo.rate;
+
+  const finalPrice =
+    Math.max(calculatedPrice, 400);
+
+  document.getElementById("bracket").innerText =
+    rateInfo.label;
+
+  document.getElementById("rate").innerText =
+    "$" + rateInfo.rate.toFixed(2) + " / ton";
+
+  document.getElementById("calculated").innerText =
+    "$" + calculatedPrice.toFixed(2);
+
+  if (calculatedPrice < 400) {
+    document.getElementById("minimumMessage").innerText =
+      "$400 MINIMUM APPLIED";
+  }
+
+  document.getElementById("finalPrice").innerText =
+    "$" + finalPrice.toFixed(2);
+}
+
+</script>
+
+</body>
+</html>
